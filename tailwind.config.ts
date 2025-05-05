@@ -10,10 +10,6 @@ const config: Config = {
     "components/**/*.{ts,tsx}",
   ],
   theme: {
-    fontFamily: {
-      sans: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
-      montserrat: ["Montserrat", "sans-serif"],
-    },
     extend: {
       colors: {
         border: "hsl(var(--border))",
@@ -49,23 +45,30 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        gray: {
-          900: "#0A0A0F",
-          800: "#121218",
-          700: "#1A1A20",
-          600: "#252530",
-          500: "#36364D",
-          400: "#9CA3AF",
-          300: "#D1D5DB",
-          200: "#E5E7EB",
-          100: "#F3F4F6",
-          50: "#F9FAFB",
+        purple: {
+          primary: "#612a74",
+          light: "#f0cfe7",
         },
+        text: {
+          primary: "#000000",
+          secondary: "#776f69",
+          dark: "#040404",
+        },
+        success: "#34c759",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "1rem",
+        "2xl": "1.5rem",
+      },
+      animation: {
+        spin: "spin 1s linear infinite",
+      },
+      fontFamily: {
+        sans: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
+        montserrat: ["Montserrat", "sans-serif"],
       },
     },
   },
