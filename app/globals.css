@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 10, 10, 15;
+  --border-thick: 2px;
+  --border-regular: 1px;
+  --border-thin: 0.5px;
+}
+
+@layer base {
+  html {
+    font-family: "Montserrat", sans-serif;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  margin: 0;
+  padding: 0;
+  font-family: "Montserrat", sans-serif;
+}
+
+* {
+  font-family: "Montserrat", sans-serif;
+}
+
+.font-montserrat {
+  font-family: "Montserrat", sans-serif;
+}
+
+/* Material Icons */
+.material-icons {
+  font-family: "Material Icons";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animation for typing dots */
+@keyframes dotPulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.dot {
+  display: inline-block;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.border-thick {
+  border-width: var(--border-thick);
+}
+
+.border-thin {
+  border-width: var(--border-thin);
+}
+
+.bg-darker {
+  background-color: rgb(5, 5, 10);
+}
+
+.bg-dark-accent {
+  background-color: rgb(15, 15, 20);
+}
