@@ -3,191 +3,229 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import type { Message, ChatHistoryItem } from "../app/page"
+import { Send, Bot, Info, HelpCircle, Code, Calendar } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
 
-interface ChatInterfaceProps {
-  goBack: () => void
-  activeChat: ChatHistoryItem | null
+interface Message {
+  id: string
+  text: string
+  sender: "user" | "assistant"
+  timestamp: Date
 }
 
-export default function ChatInterface({ goBack, activeChat }: ChatInterfaceProps) {
-  const [inputValue, setInputValue] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([])
+export default function ChatInterface({
+  messages,
+  setMessages,
+  selectedModule,
+  isMobile = false,
+}: {
+  messages: Message[]
+  setMessages: (messages: Message[]) => void
+  selectedModule: string
+  isMobile?: boolean
+}) {
+  const [input, setInput] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Initialize messages based on activeChat
-  useEffect(() => {
-    if (activeChat) {
-      setMessages([
-        {
-          id: `${activeChat.id}-question`,
-          content: activeChat.question,
-          sender: "user",
-          timestamp: activeChat.timestamp,
-        },
-        {
-          id: `${activeChat.id}-answer`,
-          content: activeChat.answer,
-          sender: "ai",
-          timestamp: new Date(activeChat.timestamp.getTime() + 1000), // 1 second later
-        },
-      ])
-    } else {
-      setMessages([
-        {
-          id: "welcome",
-          content: "Hello! I'm Kamogelos AI. How can I help you today?",
-          sender: "ai",
-          timestamp: new Date(),
-        },
-      ])
-    }
-  }, [activeChat])
+  const moduleInfo = {
+    assistant: {
+      name: "Chat Assistant",
+      icon: <Bot size={20} />,
+      welcomeMessage:
+        "Hi there! I'm your personal assistant. Try these commands: /help, /about, /time, /date, /weather",
+    },
+  }
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+  const currentModule = moduleInfo["assistant"]
 
   const handleSend = () => {
-    if (inputValue.trim()) {
-      // Add user message
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        content: inputValue.trim(),
-        sender: "user",
+    if (input.trim() === "") return
+
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: input.trim(),
+      sender: "user",
+      timestamp: new Date(),
+    }
+
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
+    setInput("")
+
+    // Process commands
+    const command = input.trim().toLowerCase()
+    let responseText = ""
+
+    if (command === "/help") {
+      responseText =
+        "Available commands:\n/help - Show this help message\n/about - About this assistant\n/time - Show current time\n/date - Show current date\n/weather - Show weather (demo)"
+    } else if (command === "/about") {
+      responseText = "This is a test version of the chat assistant. More features coming soon!"
+    } else if (command === "/time") {
+      const now = new Date()
+      responseText = `Current time: ${now.toLocaleTimeString()}`
+    } else if (command === "/date") {
+      const now = new Date()
+      responseText = `Current date: ${now.toLocaleDateString()}`
+    } else if (command === "/weather") {
+      responseText = "Weather feature is coming soon. This is just a demo response."
+    } else if (command.startsWith("/")) {
+      responseText = `Unknown command: ${command}. Type /help to see available commands.`
+    } else {
+      responseText =
+        "This is a test version with limited functionality. Please try using one of the available commands by typing /help"
+    }
+
+    // Add assistant response
+    setTimeout(() => {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: responseText,
+        sender: "assistant",
         timestamp: new Date(),
       }
-
-      setMessages((prev) => [...prev, userMessage])
-      setIsLoading(true)
-      setInputValue("")
-
-      // Simulate AI response after a delay
-      setTimeout(() => {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: getAIResponse(inputValue.trim()),
-          sender: "ai",
-          timestamp: new Date(),
-        }
-
-        setMessages((prev) => [...prev, aiMessage])
-        setIsLoading(false)
-      }, 1500)
-    }
+      setMessages([...updatedMessages, assistantMessage])
+    }, 500)
   }
 
-  // Simple AI response generator
-  const getAIResponse = (userInput: string): string => {
-    const responses = [
-      "I understand. Can you tell me more about that?",
-      "That's interesting! How can I help you with this?",
-      "Thanks for sharing. Is there anything specific you'd like to know?",
-      "I see. Let me know if you need any assistance with that.",
-      `I found some information about "${userInput}". Would you like me to elaborate?`,
-      "I'd be happy to discuss this further if you have more questions.",
-      "That's a great question. Here's what I know about it...",
-    ]
-
-    return responses[Math.floor(Math.random() * responses.length)]
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey && inputValue.trim()) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSend()
     }
   }
 
-  // Format timestamp
-  const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  }
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  useEffect(() => {
+    // Focus input when component mounts
+    if (!isMobile) {
+      inputRef.current?.focus()
+    }
+  }, [isMobile])
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-4 py-4 flex items-center">
-        <button onClick={goBack} className="flex items-center">
-          <span className="material-icons mr-2">arrow_back</span>
-          <span className="font-medium">Back</span>
-        </button>
-      </div>
-
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
-              {message.sender === "ai" && (
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center mr-2 flex-shrink-0">
-                  <span className="material-icons text-white text-sm">smart_toy</span>
-                </div>
-              )}
-
-              <div
-                className={`max-w-[75%] rounded-2xl p-3 ${
-                  message.sender === "user" ? "bg-purple-primary text-white" : "bg-white text-text-primary"
-                }`}
-              >
-                <p>{message.content}</p>
-                <p
-                  className={`text-xs mt-1 ${message.sender === "user" ? "text-purple-light" : "text-text-secondary"}`}
-                >
-                  {formatTime(message.timestamp)}
-                </p>
+    <div className="bg-chat-bg rounded-xl flex flex-col h-full w-full max-w-full overflow-hidden">
+      <div className="p-4 md:p-6 flex-shrink-0">
+        <AnimatePresence>
+          <motion.div
+            className="flex items-center justify-between mb-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
+                {currentModule.icon}
               </div>
-
-              {message.sender === "user" && (
-                <div className="w-8 h-8 rounded-full bg-purple-light flex items-center justify-center ml-2 flex-shrink-0">
-                  <span className="material-icons text-purple-primary text-sm">person</span>
-                </div>
-              )}
+              <h2 className="text-lg font-medium">{currentModule.name}</h2>
             </div>
+            <div className="flex space-x-2">
+              <span className="h-2 w-2 rounded-full bg-green-400"></span>
+              <span className="text-xs text-neutral-400">Active</span>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Command suggestions */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {["/help", "/about", "/time", "/date", "/weather"].map((cmd) => (
+            <button
+              key={cmd}
+              className="px-3 py-1 text-xs rounded-full bg-neutral-800 hover:bg-neutral-700 transition-colors"
+              onClick={() => setInput(cmd)}
+            >
+              {cmd}
+            </button>
           ))}
-
-          {/* Loading indicator */}
-          {isLoading && (
-            <div className="flex items-start">
-              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center mr-2">
-                <span className="material-icons text-white text-sm">smart_toy</span>
-              </div>
-              <div className="bg-white rounded-2xl p-3">
-                <div className="flex space-x-1">
-                  <div className="dot w-2 h-2 bg-text-secondary rounded-full"></div>
-                  <div className="dot w-2 h-2 bg-text-secondary rounded-full"></div>
-                  <div className="dot w-2 h-2 bg-text-secondary rounded-full"></div>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Chat Input */}
-      <div className="p-4 bg-white border-t border-gray-200">
-        <div className="flex items-center bg-background rounded-full p-2">
+      <div className="border-t border-b border-neutral-800 flex-grow overflow-y-auto scrollbar-hide">
+        <div className="p-4 md:p-6 space-y-6">
+          {messages.length === 0 ? (
+            <motion.div
+              className="flex flex-col items-center justify-center h-full py-10 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="w-16 h-16 bg-neutral-800 rounded-full mb-4 flex items-center justify-center">
+                {currentModule.icon}
+              </div>
+              <h3 className="text-xl font-medium mb-2">Welcome to Kamogelos</h3>
+              <p className="text-neutral-400 max-w-sm">{currentModule.welcomeMessage}</p>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="p-3 bg-neutral-800 rounded-lg flex items-center">
+                  <HelpCircle size={18} className="mr-2 text-primary" />
+                  <span className="text-sm">Type /help for commands</span>
+                </div>
+                <div className="p-3 bg-neutral-800 rounded-lg flex items-center">
+                  <Info size={18} className="mr-2 text-primary" />
+                  <span className="text-sm">Type /about for info</span>
+                </div>
+                <div className="p-3 bg-neutral-800 rounded-lg flex items-center">
+                  <Code size={18} className="mr-2 text-primary" />
+                  <span className="text-sm">More features coming soon</span>
+                </div>
+                <div className="p-3 bg-neutral-800 rounded-lg flex items-center">
+                  <Calendar size={18} className="mr-2 text-primary" />
+                  <span className="text-sm">Try /date or /time</span>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            messages.map((message, index) => (
+              <motion.div
+                key={message.id}
+                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <div
+                  className={`max-w-[80%] p-3 rounded-lg ${
+                    message.sender === "user"
+                      ? "bg-primary text-white rounded-tr-none"
+                      : "bg-neutral-800 text-white rounded-tl-none"
+                  }`}
+                >
+                  <p className="break-words whitespace-pre-line">{message.text}</p>
+                  <div className="text-xs text-neutral-400 mt-1 text-right">
+                    {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
+          <div ref={messagesEndRef} className="h-4" />
+        </div>
+      </div>
+
+      {/* Input field */}
+      <div className="p-4 md:p-6 flex-shrink-0">
+        <div className="relative">
           <input
-            type="text"
-            placeholder="Type a message..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyPress}
             ref={inputRef}
-            className="flex-1 bg-transparent outline-none px-3 py-2"
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message or command (try /help)..."
+            className="w-full py-3 pl-4 pr-12 bg-neutral-800 border border-neutral-700 rounded-full focus:outline-none focus:ring-1 focus:ring-neutral-600"
           />
           <button
             onClick={handleSend}
-            disabled={!inputValue.trim() || isLoading}
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              inputValue.trim() && !isLoading ? "bg-purple-primary text-white" : "bg-gray-200 text-gray-400"
-            }`}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-primary rounded-full"
+            disabled={input.trim() === ""}
           >
-            <span className="material-icons">send</span>
+            <Send size={16} className="text-white" />
           </button>
         </div>
       </div>
